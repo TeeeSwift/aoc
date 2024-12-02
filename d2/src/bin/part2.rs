@@ -62,10 +62,10 @@ fn main() -> std::io::Result<()> {
         let line = line?;
         let v: Vec<i32> = line.split(' ').map(|v| v.parse::<i32>().unwrap()).collect();
         let report = Report::new(v);
+        let formatted_vector = format!("{:?}", report.values);
 
         if report.is_valid() {
             valid_report_count += 1;
-            let formatted_vector = format!("{:?}", report.values);
             println!(
                 "{:<40} {:<10} {:<10} {}",
                 formatted_vector, "[  ]", "[  ]", valid_report_count
@@ -75,13 +75,11 @@ fn main() -> std::io::Result<()> {
 
         if report.try_adjustment() {
             valid_report_count += 1;
-            let formatted_vector = format!("{:?}", report.values);
             println!(
                 "{:<40} {:<10} {:<10} {}",
                 formatted_vector, "FAIL", "SUCCESS", valid_report_count
             );
         } else {
-            let formatted_vector = format!("{:?}", report.values);
             println!(
                 "{:<40} {:<10} {:<10} {}",
                 formatted_vector, "FAIL", "[  ]", valid_report_count
