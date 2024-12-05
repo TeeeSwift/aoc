@@ -36,3 +36,45 @@ pub fn fix(rule: (u16, u16), update: &mut Vec<u16>) {
 
     println!("After: update: {:?}", update);
 }
+
+#[test]
+fn check_check() {
+    let rule = (1, 2);
+    let rule2 = (2, 1);
+    let update = vec![1, 2, 3];
+
+    assert_eq!(check(&rule, &update), true);
+    assert_eq!(check(&rule2, &update), false);
+}
+
+#[test]
+fn check_fix() {
+    let rule2 = (2, 1);
+    let mut update: Vec<u16> = vec![1, 2, 3];
+
+    fix(rule2, &mut update);
+
+    assert_eq!(update, vec![2, 1, 3]);
+}
+
+#[test]
+fn check_find_mistake() {
+    let rule: (u16, u16) = (1, 2);
+    let rule2: (u16, u16) = (2, 3);
+
+    let rules = vec![rule, rule2];
+    let update = vec![1, 2, 3];
+
+    let mistake = find_mistake(&rules, &update);
+    assert!(mistake.is_none());
+
+    let rule: (u16, u16) = (1, 2);
+    let rule2: (u16, u16) = (2, 3);
+
+    let rules = vec![rule, rule2];
+    let update = vec![1, 3, 2];
+
+    let mistake = find_mistake(&rules, &update);
+    assert!(mistake.is_some());
+    assert_eq!(mistake.unwrap(), (2, 3));
+}
