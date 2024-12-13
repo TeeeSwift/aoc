@@ -1,0 +1,18 @@
+use std::{cell::RefCell, rc::Rc};
+
+use d12::{get_cost, node::Node, parse_input};
+
+pub fn main() {
+    let grid: Vec<Vec<char>> = parse_input();
+    let mut visited: HashSet<(u16, u16)> = HashSet::new();
+
+    let mut total: usize = 0;
+
+    for r in grid.iter() {
+        for c in r.iter() {
+            total += get_cost(&grid, (r, c), &mut visited);
+        }
+    }
+
+    println!("{}", total);
+}
