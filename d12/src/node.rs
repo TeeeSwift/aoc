@@ -1,63 +1,164 @@
-use std::{cell::RefCell, rc::Rc};
-
-#[derive(Debug, Clone)]
-pub struct Node {
-    pub visited: bool,
+pub struct Node<'a> {
     pub value: char,
     pub y: usize,
     pub x: usize,
-    pub grid: Option<Rc<RefCell<Vec<Vec<Node>>>>>,
+    pub grid: &'a Vec<Vec<char>>,
+    pub north: bool,
+    pub east: bool,
+    pub south: bool,
+    pub west: bool,
 }
 
-impl Node {
-    pub fn new(c: char, y: usize, x: usize) -> Self {
+impl<'a> Node<'a> {
+    pub fn new(value: char, y: usize, x: usize, grid: &'a Vec<Vec<char>>) -> Self {
         Node {
-            visited: false,
-            value: c,
+            value,
             y,
             x,
-            grid: None,
+            grid,
+            north: true,
+            east: true,
+            south: true,
+            west: true,
         }
     }
 
-    pub fn set_grid(&mut self, grid: Rc<RefCell<Vec<Vec<Node>>>>) {
-        self.grid = Some(grid);
-    }
-
-    pub fn get_neighbors(&self) -> Vec<(usize, usize)> {
-        println!("getting neighbors for: {}, {}", self.y, self.x);
+    pub fn get_valid_neighbors(&mut self) -> Vec<(usize, usize)> {
         let mut v: Vec<(usize, usize)> = vec![];
 
-        let grid = self.grid.as_ref().unwrap().borrow();
-
-        // returns valid neighbors
-        if self.y != 0 {
-            // get up
-            v.push((self.y - 1, self.x));
+        // UP
+        if self.y > 0 {
+            if self.grid[self.y - 1][self.x] == self.value {
+                self.north = false;
+                v.push((self.y - 1, self.x));
+            }
         };
 
-        if self.y < grid.len() - 1 && self.is_valid(&grid, (self.y + 1, self.x)) {
-            // get get bottom
-            v.push((self.y + 1, self.x));
-        }
+        // RIGHT
+        if self.x < self.grid[0].len() - 1 {
+            if self.grid[self.y][self.x + 1] == self.value {
+                self.east = false;
+                v.push((self.y, self.x + 1));
+            }
+        };
 
-        if self.x != 0 && self.is_valid(&grid, (self.y, self.x - 1)) {
-            // get left
-            v.push((self.y, self.x - 1));
-        }
+        // DOWN
+        if self.y < self.grid.len() - 1 {
+            if self.grid[self.y + 1][self.x] == self.value {
+                self.south = false;
+                v.push((self.y + 1, self.x));
+            }
+        };
 
-        if self.x < grid[0].len() - 1 && self.is_valid(&grid, (self.y, self.x + 1)) {
-            // get get right
-            v.push((self.y, self.x + 1));
-        }
+        // LEFT
+        if self.x > 0 {
+            if self.grid[self.y][self.x - 1] == self.value {
+                self.west = false;
+                v.push((self.y, self.x - 1));
+            }
+        };
 
-        println!("adding: {:?}", v);
-        v
+        return v;
     }
 
-    fn is_valid(&self, grid: &Vec<Vec<Node>>, coordinates: (usize, usize)) -> bool {
-        let neighbor = &grid[coordinates.0][coordinates.1];
+    pub fn count_edges(&self) -> usize {
+        let mut count: usize = 0;
+        if self.north {
+            count += 1;
+        };
+        if self.east {
+            count += 1;
+        };
+        if self.south {
+            count += 1;
+        };
+        if self.west {
+            count += 1;
+        };
 
-        neighbor.value == self.value && !(neighbor.visited)
+        count
+    }
+
+    pub fn count_corners(&self) -> usize {
+        match self.count_edges() {
+            0 => {
+                let mut count: usize = 0;
+                if self.grid[self.y - 1][self.x - 1] != self.value {
+                    count += 1;
+                }
+                if self.grid[self.y - 1][self.x + 1] != self.value {
+                    count += 1;
+                }
+                if self.grid[self.y + 1][self.x + 1] != self.value {
+                    count += 1;
+                }
+                if self.grid[self.y + 1][self.x - 1] != self.value {
+                    count += 1;
+                }
+                count
+            }
+            1 => {
+                let mut count: usize = 0;
+                if self.north && self.grid[self.y + 1][self.x - 1] != self.value {
+                    count += 1;
+                }
+                if self.north && self.grid[self.y + 1][self.x + 1] != self.value {
+                    count += 1;
+                }
+
+                if self.east && self.grid[self.y - 1][self.x - 1] != self.value {
+                    count += 1;
+                }
+                if self.east && self.grid[self.y + 1][self.x - 1] != self.value {
+                    count += 1;
+                }
+
+                if self.west && self.grid[self.y - 1][self.x + 1] != self.value {
+                    count += 1;
+                }
+                if self.west && self.grid[self.y + 1][self.x + 1] != self.value {
+                    count += 1;
+                }
+
+                if self.south && self.grid[self.y - 1][self.x - 1] != self.value {
+                    count += 1;
+                }
+                if self.south && self.grid[self.y - 1][self.x + 1] != self.value {
+                    count += 1;
+                }
+
+                count
+            }
+            2 => {
+                if self.north && self.east {
+                    if self.grid[self.y + 1][self.x - 1] == self.value {
+                        return 1;
+                    };
+                    return 2;
+                } else if self.north && self.west {
+                    if self.grid[self.y + 1][self.x + 1] == self.value {
+                        return 1;
+                    };
+                    return 2;
+                } else if self.east && self.south {
+                    if self.grid[self.y - 1][self.x - 1] == self.value {
+                        return 1;
+                    };
+                    return 2;
+                } else if self.west && self.south {
+                    if self.grid[self.y - 1][self.x + 1] == self.value {
+                        return 1;
+                    };
+                    return 2;
+                } else if self.north && self.south {
+                    return 0;
+                } else {
+                    return 0;
+                }
+            }
+            3 => 2,
+            4 => 4,
+            _ => 0,
+        }
     }
 }

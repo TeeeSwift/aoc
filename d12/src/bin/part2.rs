@@ -10,15 +10,15 @@ pub fn main() {
 
     for (y, r) in grid.iter().enumerate() {
         for (x, _) in r.iter().enumerate() {
-            let (char, area, perimeter, edges) = get_measurements(&grid, (y, x), &mut visited);
+            let (character, area, perimeter, edges) = get_measurements(&grid, (y, x), &mut visited);
 
             if area > 0 {
                 println!(
-                    "{}, area: {}, perimeter: {}, edges: {}",
-                    char, area, perimeter, edges
+                    "{} area: {}, perimeter: {}, edges: {}",
+                    character, area, perimeter, edges
                 );
             }
-            total += area * perimeter;
+            total += area * edges;
         }
     }
 
