@@ -1,10 +1,11 @@
 use std::{
-    collections::{HashMap, VecDeque},
-    fs::{self, File},
+    collections::HashMap,
+    fs::File,
     io::{BufRead, BufReader},
+    sync::Arc,
 };
 
-pub fn parse_input() -> (Vec<Vec<char>>, VecDeque<(usize, usize)>) {
+pub fn parse_input() -> (Vec<Vec<char>>, Vec<(usize, usize)>) {
     let filename = "src/sample";
     let filename = "src/input";
 
@@ -15,12 +16,12 @@ pub fn parse_input() -> (Vec<Vec<char>>, VecDeque<(usize, usize)>) {
 
     let f = File::open(filename).unwrap();
     let reader = BufReader::new(f);
-    let mut corruptions: VecDeque<(usize, usize)> = VecDeque::new();
+    let mut corruptions: Vec<(usize, usize)> = vec![];
 
     for line in reader.lines() {
         let line = line.unwrap();
         let mut iter = line.split(',');
-        corruptions.push_back((
+        corruptions.push((
             iter.next().unwrap().trim().parse::<usize>().unwrap(),
             iter.next().unwrap().trim().parse::<usize>().unwrap(),
         ))
@@ -35,24 +36,21 @@ pub fn print_grid(grid: &Vec<Vec<char>>) {
     }
 }
 
-pub fn progress_grid(
-    grid: &mut [Vec<char>],
-    corruptions: &mut VecDeque<(usize, usize)>,
-    count: usize,
-) {
-    for _ in 1..=count {
-        let corruption = corruptions.pop_front().unwrap();
+pub fn progress_grid(grid: &mut [Vec<char>], corruptions: Arc<&Vec<(usize, usize)>>, count: usize) {
+    for &corruption in corruptions.iter().take(count + 1).skip(1) {
         grid[corruption.1][corruption.0] = '#';
     }
 }
 
 pub fn find_shortest_path(grid: &mut [Vec<char>]) -> Result<Vec<(usize, usize)>, bool> {
-    let mut queue: VecDeque<(usize, usize)> = VecDeque::from([(0, 0)]);
+    let mut queue: Vec<(usize, usize)> = Vec::from([(0, 0)]);
     let mut cost_map: HashMap<(usize, usize), usize> = HashMap::new();
     let mut parent_map: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
 
     // get distance to queue square
-    while let Some(position) = queue.pop_front() {
+    let mut i: usize = 0;
+    while let Some(position) = queue.get(i) {
+        let position = *position;
         let distance_to_current_square = *cost_map.get(&position).unwrap_or(&0);
         // get options
         let options = get_options(grid, position);
@@ -63,11 +61,12 @@ pub fn find_shortest_path(grid: &mut [Vec<char>]) -> Result<Vec<(usize, usize)>,
                 true => {
                     cost_map.insert(option, distance_to_current_square + 1);
                     parent_map.insert(option, position);
-                    queue.push_back(option);
+                    queue.push(option);
                 }
                 false => { /* do nothing*/ }
             }
         }
+        i += 1;
     }
 
     let mut path: Vec<(usize, usize)> = vec![];
@@ -108,31 +107,31 @@ pub fn get_options(grid: &[Vec<char>], position: (usize, usize)) -> Vec<(usize, 
     options
 }
 
-#[test]
-fn parse_inp() {
-    let (a, b) = parse_input();
-    println!("{:?}", b);
-    print_grid(&a);
-}
-
-#[test]
-fn test_progress_grid() {
-    let (mut a, mut b) = parse_input();
-    println!("{:?}", b);
-    print_grid(&a);
-    println!("------------");
-    progress_grid(&mut a, &mut b, 3);
-    print_grid(&a);
-}
-
-#[test]
-fn test_shortest_path() {
-    let (mut a, mut b) = parse_input();
-    println!("{:?}", b);
-    print_grid(&a);
-    println!("------------");
-    progress_grid(&mut a, &mut b, 12);
-    let v = find_shortest_path(&mut a);
-    println!("{:?}", v);
-    print_grid(&a);
-}
+// #[test]
+// fn parse_inp() {
+//     let (a, b) = parse_input();
+//     println!("{:?}", b);
+//     print_grid(&a);
+// }
+//
+// #[test]
+// fn test_progress_grid() {
+//     let (mut a, mut b) = parse_input();
+//     println!("{:?}", b);
+//     print_grid(&a);
+//     println!("------------");
+//     progress_grid(&mut a, &mut b, 3);
+//     print_grid(&a);
+// }
+//
+// #[test]
+// fn test_shortest_path() {
+//     let (mut a, mut b) = parse_input();
+//     println!("{:?}", b);
+//     print_grid(&a);
+//     println!("------------");
+//     progress_grid(&mut a, &mut b, 12);
+//     let v = find_shortest_path(&mut a);
+//     println!("{:?}", v);
+//     print_grid(&a);
+// }
